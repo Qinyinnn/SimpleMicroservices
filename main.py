@@ -14,6 +14,8 @@ from typing import Optional
 from models.person import PersonCreate, PersonRead, PersonUpdate
 from models.address import AddressCreate, AddressRead, AddressUpdate
 from models.health import Health
+from models.age import Age
+from models.job import Job
 
 port = int(os.environ.get("FASTAPIPORT", 8000))
 
@@ -173,3 +175,71 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
+
+# -----------------------------------------------------------------------------
+# Age endpoints
+# -----------------------------------------------------------------------------
+ages: Dict[str, Age] = {}
+
+@app.post("/ages", response_model=Age, status_code=201, tags=["ages"])
+def create_age(payload: Age):
+    ages[payload.person_name] = payload
+    return payload
+
+@app.get("/ages/{person_name}", response_model=Age, tags=["ages"])
+def get_age(person_name: str):
+    if person_name not in ages:
+        raise HTTPException(404, "Age record not found")
+    return ages[person_name]
+
+@app.put("/ages/{person_name}", response_model=Age, tags=["ages"])
+def update_age(person_name: str, age: Age):
+    if person_name != age.person_name:
+        raise HTTPException(400, "Person name in URL must match payload")
+    if person_name not in ages:
+        raise HTTPException(404, "Age record not found")
+    ages[person_name] = age
+    return age
+
+@app.delete("/ages/{person_name}", status_code=204, tags=["ages"])
+def delete_age(person_name: str):
+    if person_name not in ages:
+        raise HTTPException(404, "Age record not found")
+    del ages[person_name]
+    return None
+
+# -----------------------------------------------------------------------------
+# Job endpoints
+# -----------------------------------------------------------------------------
+jobs: Dict[str, Job] = {}
+
+@app.post("/jobs", response_model=Job, status_code=201, tags=["jobs"])
+def create_job(payload: Job):
+    jobs[str(payload.id)] = payload
+    return payload
+
+@app.get("/jobs", response_model=List[Job], tags=["jobs"])
+def list_jobs():
+    return list(jobs.values())
+
+@app.get("/jobs/{job_id}", response_model=Job, tags=["jobs"])
+def get_job(job_id: str):
+    if job_id not in jobs:
+        raise HTTPException(404, "Job not found")
+    return jobs[job_id]
+
+@app.put("/jobs/{job_id}", response_model=Job, tags=["jobs"])
+def update_job(job_id: str, job: Job):
+    if str(job.id) != job_id:
+        raise HTTPException(400, "Job ID in URL must match payload")
+    if job_id not in jobs:
+        raise HTTPException(404, "Job not found")
+    jobs[job_id] = job
+    return job
+
+@app.delete("/jobs/{job_id}", status_code=204, tags=["jobs"])
+def delete_job(job_id: str):
+    if job_id not in jobs:
+        raise HTTPException(404, "Job not found")
+    del jobs[job_id]
+    return None
