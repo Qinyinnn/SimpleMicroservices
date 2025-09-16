@@ -216,7 +216,7 @@ jobs: Dict[str, Job] = {}
 
 @app.post("/jobs", response_model=Job, status_code=201, tags=["jobs"])
 def create_job(payload: Job):
-    jobs[str(payload.id)] = payloada
+    jobs[str(payload.id)] = payload
     return payload
 
 @app.get("/jobs", response_model=List[Job], tags=["jobs"])
